@@ -8,9 +8,12 @@ This is an advanced WiFi configuration manager for the ESP32, designed to provid
 -   **Modern UI:** Sleek, responsive design that works perfectly on both mobile and desktop devices.
 -   **Multilingual Support:** Supports 5 languages (English, Spanish, Chinese, Portuguese, and French) with browser-side persistence.
 -   **Network Scanning:** Automatically scans for nearby WiFi networks and displays them in a convenient dropdown menu.
+-   **Smart Control Dashboard:** Once connected, access a web panel to control devices remotely.
+-   **mDNS Support:** Access the dashboard easily via `http://control.local` without needing to know the IP address.
 -   **Security:** Features a password visibility toggle (eye icon) and secure credential storage using the `Preferences` library.
 -   **Physical Factory Reset:** Dedicated reset mechanism (pin GPIO 4 to GND for 3 seconds) to wipe saved credentials.
 -   **Status LED:** The built-in LED (Pin 2) provides real-time visual feedback on the connection status.
+
 
 ## 📸 Connection Process
 
@@ -23,8 +26,9 @@ Below is the configuration workflow:
 ## 🛠️ Hardware Requirements
 
 -   **Microcontroller:** ESP32 (NodeMCU or similar).
--   **LED:** Connected to pin GPIO 2 (usually the built-in LED).
--   **Reset Button (Optional):** Connect pin GPIO 4 to Ground (GND) to trigger a factory reset.
+-   **Status LED:** Connected to pin GPIO 2 (usually the built-in LED).
+-   **Smart Control LED:** Connect an LED (with resistor!) to **GPIO 5** to control it via the web dashboard.
+-   **Reset Button (Optional):** Connect pin **GPIO 4** to Ground (GND) to trigger a factory reset.
 
 ## 💻 Installation
 
@@ -41,6 +45,7 @@ Below is the configuration workflow:
 3.  **Configure:** If the captive portal doesn't open automatically, navigate to `http://192.168.4.1` in your web browser.
 4.  **Save:** Select your local network, enter the password, and click **"Save & Connect"**.
 5.  **Reboot:** The ESP32 will restart and attempt to connect to your network. If successful, the built-in LED will turn ON.
+6.  **Smart Control:** Once the blue LED is steady, visit **[http://control.local](http://control.local)** in your browser to access the Smart Control Dashboard and toggle your device (Pin 5).
 
 ## 🧹 Factory Reset
 

@@ -2,6 +2,7 @@
 #include <WebServer.h>
 #include <Preferences.h>
 #include <DNSServer.h>
+#include <ESPmDNS.h>
 
 const int LED_PIN = 2;
 WebServer server(80);
@@ -38,6 +39,12 @@ String getHTML(String title, String content, String script = "", bool showLang =
   html += ".password-container { position: relative; width: 100%; margin-top: 0.5rem; margin-bottom: 1rem; }";
   html += ".password-container input { margin: 0 !important; }";
   html += ".toggle-pass { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.2rem; user-select: none; line-height: 1; }";
+  html += ".switch { position: relative; display: inline-block; width: 50px; height: 26px; }";
+  html += ".switch input { opacity: 0; width: 0; height: 0; }";
+  html += ".slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }";
+  html += ".slider:before { position: absolute; content: ''; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }";
+  html += "input:checked + .slider { background-color: var(--primary); }";
+  html += "input:checked + .slider:before { transform: translateX(24px); }";
   html += "</style></head><body>";
   html += "<div class='card'>";
   html += "<div class='lang-container'>";
@@ -48,13 +55,12 @@ String getHTML(String title, String content, String script = "", bool showLang =
   
   html += "<script>\n";
   html += "const dict = {\n";
-  html += "  \"en\": {\"t_cfg\": \"WiFi Config\", \"l_ssid\": \"Select Network (SSID)\", \"l_pass\": \"Password\", \"b_save\": \"Save & Connect\", \"l_rescan\": \"Rescan (Restarts AP)\", \"t_saving\": \"Saving...\", \"msg_app\": \"Applying changes & restarting...\", \"t_saved\": \"Saved!\", \"msg_cred\": \"Credentials updated.\", \"msg_rest\": \"Device is restarting...\", \"t_err\": \"Error\", \"msg_miss\": \"Missing required fields.\", \"b_retry\": \"Try Again\", \"opt_no\": \"No networks found\", \"opt_sel\": \"Select a network...\", \"t_scan\": \"Scanning...\", \"msg_scan\": \"Restarting to scan networks. Reconnect in 10s.\", \"l_lang\": \"Language\"},\n";
-  html += "  \"es\": {\"t_cfg\": \"Configuración WiFi\", \"l_ssid\": \"Seleccionar Red (SSID)\", \"l_pass\": \"Contraseña\", \"b_save\": \"Guardar y Conectar\", \"l_rescan\": \"Escanear de nuevo (Reinicia AP)\", \"t_saving\": \"Guardando...\", \"msg_app\": \"Aplicando cambios y reiniciando...\", \"t_saved\": \"¡Guardado!\", \"msg_cred\": \"Credenciales actualizadas.\", \"msg_rest\": \"El dispositivo se está reiniciando...\", \"t_err\": \"Error\", \"msg_miss\": \"Faltan campos requeridos.\", \"b_retry\": \"Intentar de nuevo\", \"opt_no\": \"No se encontraron redes\", \"opt_sel\": \"Selecciona una red...\", \"t_scan\": \"Escaneando...\", \"msg_scan\": \"Reiniciando para escanear. Reconecte en 10s.\", \"l_lang\": \"Lenguaje\"},\n";
-  html += "  \"zh\": {\"t_cfg\": \"WiFi 配置\", \"l_ssid\": \"选择网络 (SSID)\", \"l_pass\": \"密码\", \"b_save\": \"保存并连接\", \"l_rescan\": \"重新扫描 (重启 AP)\", \"t_saving\": \"保存中...\", \"msg_app\": \"正在应用更改并重启...\", \"t_saved\": \"已保存！\", \"msg_cred\": \"凭据已更新。\", \"msg_rest\": \"设备正在重启...\", \"t_err\": \"错误\", \"msg_miss\": \"缺少必填字段。\", \"b_retry\": \"重试\", \"opt_no\": \"未找到网络\", \"opt_sel\": \"请选择网络...\", \"t_scan\": \"扫描中...\", \"msg_scan\": \"正在重启以扫描网络。请在10秒后重新连接。\", \"l_lang\": \"语言\"},\n";
-  html += "  \"pt\": {\"t_cfg\": \"Configuração WiFi\", \"l_ssid\": \"Selecionar Rede (SSID)\", \"l_pass\": \"Senha\", \"b_save\": \"Salvar e Conectar\", \"l_rescan\": \"Escanear novamente (Reinicia AP)\", \"t_saving\": \"Salvando...\", \"msg_app\": \"Aplicando alterações e reiniciando...\", \"t_saved\": \"Salvo!\", \"msg_cred\": \"Credenciais atualizadas.\", \"msg_rest\": \"O dispositivo está reiniciando...\", \"t_err\": \"Erro\", \"msg_miss\": \"Campos obrigatórios ausentes.\", \"b_retry\": \"Tentar novamente\", \"opt_no\": \"Nenhuma rede encontrada\", \"opt_sel\": \"Selecione uma rede...\", \"t_scan\": \"Escaneando...\", \"msg_scan\": \"Reiniciando para escanear. Reconecte in 10s.\", \"l_lang\": \"Idioma\"},\n";
-  html += "  \"fr\": {\"t_cfg\": \"Configuration WiFi\", \"l_ssid\": \"Sélectionner Réseau (SSID)\", \"l_pass\": \"Mot de passe\", \"b_save\": \"Enregistrer et Connecter\", \"l_rescan\": \"Scanner à nouveau (Redémarre AP)\", \"t_saving\": \"Enregistrement...\", \"msg_app\": \"Application des modifications...\", \"t_saved\": \"Enregistré !\", \"msg_cred\": \"Identifiants mis à jour.\", \"msg_rest\": \"Redémarrage de l'appareil...\", \"t_err\": \"Error\", \"msg_miss\": \"Champs requis manquants.\", \"b_retry\": \"Réessayer\", \"opt_no\": \"Aucun réseau trouvé\", \"opt_sel\": \"Sélectionnez un réseau...\", \"t_scan\": \"Scan en cours...\", \"msg_scan\": \"Redémarrage pour scanner. Reconnexion dans 10s.\", \"l_lang\": \"Langue\"}\n";
+  html += "  \"en\": {\"t_cfg\": \"WiFi Config\", \"l_ssid\": \"Select Network (SSID)\", \"l_pass\": \"Password\", \"b_save\": \"Save & Connect\", \"l_rescan\": \"Rescan (Restarts AP)\", \"t_saving\": \"Saving...\", \"msg_app\": \"Applying changes & restarting...\", \"t_saved\": \"Saved!\", \"msg_cred\": \"Credentials updated.\", \"msg_rest\": \"Device is restarting...\", \"t_err\": \"Error\", \"msg_miss\": \"Missing required fields.\", \"b_retry\": \"Try Again\", \"opt_no\": \"No networks found\", \"opt_sel\": \"Select a network...\", \"t_scan\": \"Scanning...\", \"msg_scan\": \"Restarting to scan networks. Reconnect in 10s.\", \"l_lang\": \"Language\", \"t_dash\": \"Smart Control\", \"l_led\": \"Main LED\", \"st_on\": \"ON\", \"st_off\": \"OFF\"},\n";
+  html += "  \"es\": {\"t_cfg\": \"Configuración WiFi\", \"l_ssid\": \"Seleccionar Red (SSID)\", \"l_pass\": \"Contraseña\", \"b_save\": \"Guardar y Conectar\", \"l_rescan\": \"Escanear de nuevo (Reinicia AP)\", \"t_saving\": \"Guardando...\", \"msg_app\": \"Aplicando cambios y reiniciando...\", \"t_saved\": \"¡Guardado!\", \"msg_cred\": \"Credenciales actualizadas.\", \"msg_rest\": \"El dispositivo se está reiniciando...\", \"t_err\": \"Error\", \"msg_miss\": \"Faltan campos requeridos.\", \"b_retry\": \"Intentar de nuevo\", \"opt_no\": \"No se encontraron redes\", \"opt_sel\": \"Selecciona una red...\", \"t_scan\": \"Escaneando...\", \"msg_scan\": \"Reiniciando para escanear. Reconecte en 10s.\", \"l_lang\": \"Lenguaje\", \"t_dash\": \"Control Inteligente\", \"l_led\": \"LED Principal\", \"st_on\": \"ENCENDIDO\", \"st_off\": \"APAGADO\"},\n";
+  html += "  \"zh\": {\"t_cfg\": \"WiFi 配置\", \"l_ssid\": \"选择网络 (SSID)\", \"l_pass\": \"密码\", \"b_save\": \"保存并连接\", \"l_rescan\": \"重新扫描 (重启 AP)\", \"t_saving\": \"保存中...\", \"msg_app\": \"正在应用更改并重启...\", \"t_saved\": \"已保存！\", \"msg_cred\": \"凭据已更新。\", \"msg_rest\": \"设备正在重启...\", \"t_err\": \"错误\", \"msg_miss\": \"缺少必填字段。\", \"b_retry\": \"重试\", \"opt_no\": \"未找到网络\", \"opt_sel\": \"请选择网络...\", \"t_scan\": \"扫描中...\", \"msg_scan\": \"正在重启以扫描网络。请在10秒后重新连接。\", \"l_lang\": \"语言\", \"t_dash\": \"智能控制\", \"l_led\": \"主灯\", \"st_on\": \"开启\", \"st_off\": \"关闭\"},\n";
+  html += "  \"pt\": {\"t_cfg\": \"Configuração WiFi\", \"l_ssid\": \"Selecionar Rede (SSID)\", \"l_pass\": \"Senha\", \"b_save\": \"Salvar e Conectar\", \"l_rescan\": \"Escanear novamente (Reinicia AP)\", \"t_saving\": \"Salvando...\", \"msg_app\": \"Aplicando alterações e reiniciando...\", \"t_saved\": \"Salvo!\", \"msg_cred\": \"Credenciais atualizadas.\", \"msg_rest\": \"O dispositivo está reiniciando...\", \"t_err\": \"Erro\", \"msg_miss\": \"Campos obrigatórios ausentes.\", \"b_retry\": \"Tentar novamente\", \"opt_no\": \"Nenhuma rede encontrada\", \"opt_sel\": \"Selecione uma rede...\", \"t_scan\": \"Escaneando...\", \"msg_scan\": \"Reiniciando para escanear. Reconecte in 10s.\", \"l_lang\": \"Idioma\", \"t_dash\": \"Controle Inteligente\", \"l_led\": \"LED Principal\", \"st_on\": \"LIGADO\", \"st_off\": \"DESLIGADO\"},\n";
+  html += "  \"fr\": {\"t_cfg\": \"Configuration WiFi\", \"l_ssid\": \"Sélectionner Réseau (SSID)\", \"l_pass\": \"Mot de passe\", \"b_save\": \"Enregistrer et Connecter\", \"l_rescan\": \"Scanner à nouveau (Redémarre AP)\", \"t_saving\": \"Enregistrement...\", \"msg_app\": \"Application des modifications...\", \"t_saved\": \"Enregistré !\", \"msg_cred\": \"Identifiants mis à jour.\", \"msg_rest\": \"Redémarrage de l'appareil...\", \"t_err\": \"Error\", \"msg_miss\": \"Champs requis manquants.\", \"b_retry\": \"Réessayer\", \"opt_no\": \"Aucun réseau trouvé\", \"opt_sel\": \"Sélectionnez un réseau...\", \"t_scan\": \"Scan en cours...\", \"msg_scan\": \"Redémarrage pour scanner. Reconnexion dans 10s.\", \"l_lang\": \"Langue\", \"t_dash\": \"Contrôle Intelligent\", \"l_led\": \"LED Principal\", \"st_on\": \"ALLUMÉ\", \"st_off\": \"ÉTEINT\"}\n";
   html += "};\n";
-  
   html += "function setLang(l){";
   html += " localStorage.setItem('lang',l);";
   html += " const t=dict[l]||dict['en'];";
@@ -72,7 +78,6 @@ String getHTML(String title, String content, String script = "", bool showLang =
   html += " if(p.type=='password'){ p.type='text'; s.innerHTML='🙈'; }";
   html += " else { p.type='password'; s.innerHTML='👁️'; }";
   html += "}";
-  
   html += "window.addEventListener('DOMContentLoaded', ()=>{";
   html += " const l=localStorage.getItem('lang')||'en';";
   html += " document.getElementById('lang').value=l;";
@@ -171,6 +176,42 @@ void handleSave() {
   }
 }
 
+const int CONTROL_PIN = 5; // User requested Pin 5
+
+
+// Handler for toggling pins via API
+void handleToggle() {
+  if (server.hasArg("pin")) {
+    int pin = server.arg("pin").toInt();
+    // Only allow our control pin
+    if (pin == CONTROL_PIN) { 
+        int state = digitalRead(pin);
+        digitalWrite(pin, !state);
+        server.send(200, "text/plain", String(!state));
+    } else {
+        server.send(400, "text/plain", "Invalid Pin");
+    }
+  } else {
+    server.send(400, "text/plain", "Missing Pin");
+  }
+}
+
+// Handler for the Dashboard (STA mode)
+void handleDashboard() {
+  String content = "<h1 data-i18n='t_dash'>Smart Control</h1>";
+  
+  // Card for CONTROL_PIN (Pin 4)
+  content += "<div style='display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding:10px 0;'>";
+  content += "<div style='text-align:left;'><div><strong data-i18n='l_led'>Main LED</strong></div><div style='font-size:0.8rem; color:#666;'>GPIO " + String(CONTROL_PIN) + "</div></div>";
+  String ledState = digitalRead(CONTROL_PIN) ? "checked" : "";
+  content += "<label class='switch'><input type='checkbox' onchange='toggle(" + String(CONTROL_PIN) + ", this)' " + ledState + "><span class='slider round'></span></label>";
+  content += "</div>";
+
+  String script = "function toggle(pin, el) { fetch('/toggle?pin=' + pin).then(r => r.text()).then(state => { console.log('Pin ' + pin + ' is now ' + state); }); }";
+  
+  server.send(200, "text/html", getHTML("Smart Dashboard", content, script));
+}
+
 void handleNotFound() {
   server.sendHeader("Location", "/", true); 
   server.send(302, "text/plain", "");
@@ -203,7 +244,20 @@ void setupWiFi() {
     Serial.println("\nConnected!");
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
+    
+    // Start mDNS
+    if (MDNS.begin("control")) {
+      Serial.println("MDNS responder started. Access via http://control.local");
+    }
+
     digitalWrite(LED_PIN, HIGH);
+    
+    // Start Web Server for Dashboard in STA mode
+    server.on("/", handleDashboard);
+    server.on("/toggle", handleToggle);
+    server.onNotFound(handleNotFound);
+    server.begin();
+    Serial.println("Dashboard Server Started");
   } else {
     Serial.println("\nFailed to connect. Starting AP mode.");
     startAP();
@@ -237,7 +291,7 @@ void startAP() {
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
-const int RESET_PIN = 4; // Conectar PIN 4 a GND para resetear
+const int RESET_PIN = 4; // Reverted to Pin 4 for Factory Reset
 unsigned long buttonPressStartTime = 0;
 bool buttonPressed = false;
 
@@ -247,6 +301,10 @@ void setup() {
 
   Serial.begin(115200);
   pinMode(LED_PIN, OUTPUT);
+  
+  pinMode(CONTROL_PIN, OUTPUT);
+  digitalWrite(CONTROL_PIN, LOW); // Start OFF
+  
   pinMode(RESET_PIN, INPUT_PULLUP);
   digitalWrite(LED_PIN, LOW); // Start with LED OFF
 
@@ -302,11 +360,12 @@ void handleResetButton() {
 void loop() {
   handleResetButton();
 
+  // Handle web server requests if needed (AP mode or STA Dashboard)
+  // In AP mode, dnsServer needs handling too
   if (WiFi.getMode() == WIFI_AP) {
-    // Process DNS requests to hijack traffic
     dnsServer.processNextRequest();
-    server.handleClient();
   }
+  server.handleClient();
   
   // LED Logic: Only show status if NOT currently pressing the reset button
   if (!buttonPressed) {
