@@ -19,9 +19,9 @@ This is an advanced WiFi configuration manager for the ESP32, designed to provid
 
 Below is the configuration workflow:
 
-| 1. Connect to AP | 2. WiFi Configuration | 3. Success |
-| :---: | :---: | :---: |
-| ![Step 1](./1.jpeg) | ![Step 2](./2.jpeg) | ![Step 3](./3.jpeg) |
+| 1. Connect to AP | 2. WiFi Configuration | 3. Success | 4. Smart Control |
+| :---: | :---: | :---: | :---: |
+| ![Step 1](./1.jpeg) | ![Step 2](./2.jpeg) | ![Step 3](./3.jpeg) | ![Dashboard](./4.PNG) |
 
 ## 🛠️ Hardware Requirements
 
